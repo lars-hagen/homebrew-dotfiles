@@ -21,9 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Homebrew
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+      - name: Install Homebrew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
 
       - name: Install Dependencies
         run: |
@@ -77,8 +79,6 @@ jobs:
             desc "Windsurf Editor by Codeium"
             homepage "https://codeium.com/windsurf"
           
-            auto_updates true
-          
             app "Windsurf.app"
           end
           EOL
@@ -99,9 +99,8 @@ jobs:
 
       - name: Install Windsurf Cask
         run: |
-          brew untap lars-hagen/homebrew-dotfiles || true
-          brew tap lars-hagen/homebrew-dotfiles https://github.com/lars-hagen/homebrew-dotfiles.git
-          brew install --cask --verbose windsurf
+          brew tap lars-hagen/homebrew-dotfiles .
+          brew install --cask windsurf
 
       - name: Create Windsurf Binary
         run: |
@@ -111,7 +110,7 @@ jobs:
           #
           # Copyright (c) Microsoft Corporation. All rights reserved.
           # Licensed under the MIT License. See License.txt in the project root for license information.
-
+          
           # when run in remote terminal, use the remote cli
           if [ -n "$VSCODE_IPC_HOOK_CLI" ]; then
             REMOTE_CLI="$(which -a 'windsurf' | grep /remote-cli/)"
@@ -151,9 +150,3 @@ jobs:
           "$HOME/.codeium/windsurf/bin/windsurf" --version || true
           echo "Checking Windsurf help..."
           "$HOME/.codeium/windsurf/bin/windsurf" --help || true
-
-      - name: Cleanup
-        if: always()
-        run: |
-          brew untap lars-hagen/homebrew-dotfiles || true
-          rm -rf /opt/homebrew/Library/Taps/lars-hagen/homebrew-dotfiles || true
