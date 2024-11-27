@@ -3,7 +3,7 @@ class Windsurf < Formula
   homepage "https://codeium.com/windsurf"
   url "https://codeium.com/windsurf/download_mac"
   version "1.0.0" # Replace with the actual version number
-  sha256 "95f4958b3bbada4d6ebfb73d9c51f068bf78183802a1b3ce1823add4dae64223"
+  sha256 "364398c61f538cd0471c52bb274f369351b84dc8e7d73a5854df6bdfdad948e4"
 
   def install
     # Since the download is a .dmg file, we need to mount it and copy the application
