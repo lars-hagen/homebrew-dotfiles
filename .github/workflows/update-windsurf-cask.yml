@@ -106,12 +106,7 @@ jobs:
 
       - name: Verify Installation
         run: |
-          # Add Windsurf to PATH if it's not already there
-          WINDSURF_BIN="/Applications/Windsurf.app/Contents/MacOS"
-          echo "Adding $WINDSURF_BIN to PATH"
-          export PATH="$WINDSURF_BIN:$PATH"
-          
           echo "Checking Windsurf version..."
-          windsurf --version || true
+          "/Applications/Windsurf.app/Contents/MacOS/Windsurf" --version || true
           echo "Checking Windsurf help..."
-          windsurf --help || true
+          "/Applications/Windsurf.app/Contents/MacOS/Windsurf" --help || true
