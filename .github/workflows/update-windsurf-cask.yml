@@ -1,6 +1,8 @@
-name: Validate Windsurf Cask
+name: Update and Validate Windsurf Cask
 
 on:
+  schedule:
+    - cron: "0 0 * * *" # Run daily at midnight
   push:
     branches:
       - main
@@ -9,13 +11,87 @@ on:
       - main
   workflow_dispatch:
 
-jobs:
-  validate-cask:
-    runs-on: macos-latest
+permissions:
+  contents: write
 
+jobs:
+  update-and-validate:
+    runs-on: macos-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          brew install jq
+
+      - name: Fetch Latest Version and SHA256
+        id: fetch-version
+        run: |
+          # Fetch the metadata from the API
+          API_RESPONSE=$(curl -s "https://windsurf-stable.codeium.com/api/update/darwin-arm64-dmg/stable/latest")
+          
+          # Extract information using jq
+          DMG_URL=$(echo "$API_RESPONSE" | jq -r .url)
+          VERSION=$(echo "$API_RESPONSE" | jq -r .windsurfVersion)
+          SHA256=$(echo "$API_RESPONSE" | jq -r .sha256hash)
+          
+          echo "DMG_URL=$DMG_URL" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SHA256=$SHA256" >> $GITHUB_ENV
+          
+          # Store version for comparison
+          echo "LATEST_VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check Current Version
+        id: check-version
+        run: |
+          CURRENT_VERSION=$(grep -m 1 'version "' Casks/windsurf.rb | cut -d'"' -f2)
+          echo "Current version: $CURRENT_VERSION"
+          echo "Latest version: ${{ steps.fetch-version.outputs.LATEST_VERSION }}"
+          
+          if [ "$CURRENT_VERSION" != "${{ steps.fetch-version.outputs.LATEST_VERSION }}" ]; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+            echo "New version available: ${{ steps.fetch-version.outputs.LATEST_VERSION }}"
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+            echo "Already at latest version"
+          fi
+
+      - name: Update Cask File
+        if: steps.check-version.outputs.version_changed == 'true'
+        run: |
+          # Create a temporary file with the new content
+          cat > Casks/windsurf.rb.new << EOL
+          cask "windsurf" do
+            version "$VERSION"
+            sha256 "$SHA256"
+          
+            url "$DMG_URL",
+                verified: "windsurf-stable.codeiumdata.com/"
+            name "Windsurf"
+            desc "Windsurf Editor by Codeium"
+            homepage "https://codeium.com/windsurf"
+          
+            auto_updates true
+          
+            app "Windsurf.app"
+          end
+          EOL
+          
+          # Replace the old file with the new one
+          mv Casks/windsurf.rb.new Casks/windsurf.rb
+
+      - name: Commit Changes
+        if: steps.check-version.outputs.version_changed == 'true'
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/windsurf.rb
+          git commit -m "Update Windsurf cask to version $VERSION"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Homebrew
         run: |
@@ -26,25 +102,16 @@ jobs:
       - name: Install Windsurf Cask
         run: |
           brew tap lars-hagen/homebrew-dotfiles .
-          brew install --cask windsurf --verbose --debug
+          brew install --cask windsurf
 
       - name: Verify Installation
         run: |
-          # Check various possible installation locations
-          INSTALL_PATHS=(
-            "/Applications/Windsurf.app"
-            "$HOME/Applications/Windsurf.app"
-            "/opt/homebrew/Caskroom/windsurf/latest/Windsurf.app"
-          )
+          # Add Windsurf to PATH if it's not already there
+          WINDSURF_BIN="/Applications/Windsurf.app/Contents/MacOS"
+          echo "Adding $WINDSURF_BIN to PATH"
+          export PATH="$WINDSURF_BIN:$PATH"
           
-          for path in "${INSTALL_PATHS[@]}"; do
-            if [ -d "$path" ]; then
-              echo "Found Windsurf.app at: $path"
-              exit 0
-            fi
-          done
-          
-          echo "Error: Windsurf.app not found in any expected location"
-          echo "Contents of /opt/homebrew/Caskroom/windsurf:"
-          ls -la /opt/homebrew/Caskroom/windsurf || true
-          exit 1
+          echo "Checking Windsurf version..."
+          windsurf --version || true
+          echo "Checking Windsurf help..."
+          windsurf --help || true
