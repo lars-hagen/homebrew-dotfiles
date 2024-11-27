@@ -1,0 +1,36 @@
+name: Update Windsurf Formula
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Run daily at midnight
+  workflow_dispatch:
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+
+      - name: Fetch and Update SHA256
+        run: |
+          TMP_FILE="/tmp/windsurf_latest"
+          CHECKSUM=$(curl -L -o "$TMP_FILE" "https://codeium.com/windsurf/download_mac" && shasum -a 256 "$TMP_FILE" | awk '{print $1}')
+          sed -i.bak "s/^  sha256 \".*\"/  sha256 \"$CHECKSUM\"/" Formula/windsurf.rb
+          echo "Updated SHA256: $CHECKSUM"
+
+      - name: Commit Changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/windsurf.rb
+          git commit -m "Update Windsurf formula SHA256 checksum"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
