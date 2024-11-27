@@ -107,6 +107,6 @@ jobs:
       - name: Verify Installation
         run: |
           echo "Checking Windsurf version..."
-          "/Applications/Windsurf.app/Contents/MacOS/Windsurf" --version || true
+          "$HOME/.codeium/windsurf/bin/windsurf" --version || true
           echo "Checking Windsurf help..."
-          "/Applications/Windsurf.app/Contents/MacOS/Windsurf" --help || true
+          "$HOME/.codeium/windsurf/bin/windsurf" --help || true
