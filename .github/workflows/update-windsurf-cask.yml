@@ -99,7 +99,8 @@ jobs:
 
       - name: Install Windsurf Cask
         run: |
-          brew tap lars-hagen/homebrew-dotfiles .
+          brew untap lars-hagen/homebrew-dotfiles || true
+          brew tap lars-hagen/homebrew-dotfiles https://github.com/lars-hagen/homebrew-dotfiles.git
           brew install --cask --verbose windsurf
 
       - name: Create Windsurf Binary
