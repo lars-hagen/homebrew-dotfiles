@@ -21,6 +21,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
       - name: Install Dependencies
         run: |
           brew install jq
@@ -93,12 +97,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Homebrew
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          eval "$(/opt/homebrew/bin/brew shellenv)"
-          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
-
       - name: Install Windsurf Cask
         run: |
           brew tap lars-hagen/homebrew-dotfiles .
@@ -133,11 +131,7 @@ jobs:
             echo "${SOURCE_DIR%%${SOURCE_DIR#*.app}}"
           }
 
-          APP_PATH="$(app_realpath "${BASH_SOURCE[0]}")"
-          if [ -z "$APP_PATH" ]; then
-            echo "Unable to determine app path from symlink : ${BASH_SOURCE[0]}"
-            exit 1
-          fi
+          APP_PATH="/Applications/Windsurf.app"
           CONTENTS="$APP_PATH/Contents"
           ELECTRON="$CONTENTS/MacOS/Electron"
           CLI="$CONTENTS/Resources/app/out/cli.js"
