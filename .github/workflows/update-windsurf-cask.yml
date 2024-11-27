@@ -1,0 +1,32 @@
+name: Validate Windsurf Cask
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate-cask:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Homebrew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+
+      - name: Install Windsurf Cask
+        run: |
+          brew tap lars-hagen/homebrew-dotfiles .
+          brew install --cask windsurf
+
+      - name: Test Windsurf Installation
+        run: |
+          test -d "/Applications/Windsurf.app" || test -d "$HOME/Applications/Windsurf.app" 
