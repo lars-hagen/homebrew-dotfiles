@@ -15,21 +15,51 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl
+          sudo apt-get install -y curl jq
 
-      - name: Fetch and Update SHA256
+      - name: Fetch Latest Version and SHA256
         run: |
-          TMP_FILE="/tmp/windsurf_latest"
-          CHECKSUM=$(curl -L -o "$TMP_FILE" "https://codeium.com/windsurf/download_mac" && shasum -a 256 "$TMP_FILE" | awk '{print $1}')
-          sed -i.bak "s/^  sha256 \".*\"/  sha256 \"$CHECKSUM\"/" Formula/windsurf.rb
-          echo "Updated SHA256: $CHECKSUM"
+          # Fetch the metadata from the API
+          API_RESPONSE=$(curl -s "https://windsurf-stable.codeium.com/api/update/darwin-arm64-dmg/stable/latest")
+          
+          # Extract information using jq
+          DMG_URL=$(echo "$API_RESPONSE" | jq -r .url)
+          VERSION=$(echo "$API_RESPONSE" | jq -r .windsurfVersion)
+          SHA256=$(echo "$API_RESPONSE" | jq -r .sha256hash)
+          
+          echo "DMG_URL=$DMG_URL" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SHA256=$SHA256" >> $GITHUB_ENV
+
+      - name: Update Cask File
+        run: |
+          # Create a temporary file with the new content
+          cat > Casks/windsurf.rb.new << EOL
+          cask "windsurf" do
+            version "$VERSION"
+            sha256 "$SHA256"
+          
+            url "$DMG_URL",
+                verified: "windsurf-stable.codeiumdata.com/"
+            name "Windsurf"
+            desc "Windsurf Editor by Codeium"
+            homepage "https://codeium.com/windsurf"
+          
+            auto_updates true
+          
+            app "Windsurf.app"
+          end
+          EOL
+          
+          # Replace the old file with the new one
+          mv Casks/windsurf.rb.new Casks/windsurf.rb
 
       - name: Commit Changes
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/windsurf.rb
-          git commit -m "Update Windsurf formula SHA256 checksum"
+          git add Casks/windsurf.rb
+          git commit -m "Update Windsurf cask to version $VERSION"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
