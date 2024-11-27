@@ -21,12 +21,30 @@ jobs:
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           eval "$(/opt/homebrew/bin/brew shellenv)"
+          echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zshrc
 
       - name: Install Windsurf Cask
         run: |
           brew tap lars-hagen/homebrew-dotfiles .
-          brew install --cask windsurf
+          brew install --cask windsurf --verbose --debug
 
-      - name: Test Windsurf Installation
+      - name: Verify Installation
         run: |
-          test -d "/Applications/Windsurf.app" || test -d "$HOME/Applications/Windsurf.app" 
+          # Check various possible installation locations
+          INSTALL_PATHS=(
+            "/Applications/Windsurf.app"
+            "$HOME/Applications/Windsurf.app"
+            "/opt/homebrew/Caskroom/windsurf/latest/Windsurf.app"
+          )
+          
+          for path in "${INSTALL_PATHS[@]}"; do
+            if [ -d "$path" ]; then
+              echo "Found Windsurf.app at: $path"
+              exit 0
+            fi
+          done
+          
+          echo "Error: Windsurf.app not found in any expected location"
+          echo "Contents of /opt/homebrew/Caskroom/windsurf:"
+          ls -la /opt/homebrew/Caskroom/windsurf || true
+          exit 1
