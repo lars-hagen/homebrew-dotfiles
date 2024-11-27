@@ -151,3 +151,9 @@ jobs:
           "$HOME/.codeium/windsurf/bin/windsurf" --version || true
           echo "Checking Windsurf help..."
           "$HOME/.codeium/windsurf/bin/windsurf" --help || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          brew untap lars-hagen/homebrew-dotfiles || true
+          rm -rf /opt/homebrew/Library/Taps/lars-hagen/homebrew-dotfiles || true
