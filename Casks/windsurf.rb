@@ -8,5 +8,7 @@ cask "windsurf" do
   desc "Windsurf Editor by Codeium"
   homepage "https://codeium.com/windsurf"
 
+  auto_updates true
+
   app "Windsurf.app"
 end
