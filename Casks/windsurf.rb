@@ -1,8 +1,8 @@
 cask "windsurf" do
-  version "1.0.6"
-  sha256 "c9933061547d51480a25d7706f812f0677e6f038486e3f1307104dc150805b2e"
+  version "1.0.7"
+  sha256 "897cb06dcbc0999bc8ebf8152a9d8b1d4f5e1f5e50b5f73c0d6be75bb71ab5d8"
 
-  url "https://windsurf-stable.codeiumdata.com/darwin-arm64-dmg/stable/14299208eed2f89aa6262337ae5dfd1bc70e4cd8/Windsurf-darwin-arm64-1.0.6.dmg",
+  url "https://windsurf-stable.codeiumdata.com/darwin-arm64-dmg/stable/bf4345439764c543a1e5ff3517bbce5a22128bca/Windsurf-darwin-arm64-1.0.7.dmg",
       verified: "windsurf-stable.codeiumdata.com/"
   name "Windsurf"
   desc "Windsurf Editor by Codeium"
